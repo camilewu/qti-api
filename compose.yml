@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  qti-api:
+    # build: .
+    image: node:20.16.0-alpine3.20
+    volumes:
+      - .:/usr/src/app
+    container_name: qti-api
+    restart: always
+    ports:
+      - 8096:3000
+      - 8097:3001
+      
+    working_dir: '/usr/src/app'
+    command: sh -c "npm i && node index.js"
+    # env_file: .env
