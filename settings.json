@@ -1,0 +1,18 @@
+{
+    "rest-client.environmentVariables": {
+        "local": {
+            "baseUrl": "http://localhost:3000/api",
+            "token": "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
+        },
+        "staging": {
+            "baseUrl": "http://localhost:3001/api",
+            "token": "eyJhbGciOiJIUzI1NiJ9eyJSb2xlIjoiQWRtaW4if"
+        },
+        "production": {
+            "baseUrl": "http://localhost:3002/api",
+            "token": "c3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsI"
+        }
+    }
+}
+
+//http://api3.openknowledge.hk:3000

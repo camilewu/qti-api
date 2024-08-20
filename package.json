@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "archiver": "^7.0.1",
     "body-parser": "^1.20.2",
-    "express": "^4.19.2"
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0",
+    "node-cron": "^3.0.3",
+    "nodemon": "^3.1.4",
+    "xmlbuilder": "^15.1.1"
   }
 }
