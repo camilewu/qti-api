@@ -1,27 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqtiasi_v2p2" 
+<assessmentItem 
+    xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqtiasi_v2p2 https://purl.imsglobal.org/spec/qti/v3p0/schema/xsd/imsqti_asiv3p0_v1p0.xsd" 
+    xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1.xsd" 
     identifier="choice_ruby_i23n" 
-    title="{data.type}" 
+    title="Sample Question" 
     adaptive="false" 
-    time-dependent="false" 
+    timeDependent="false" 
     xml:lang="cn">
-    
+
     <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+        <correctResponse>
+            <value></value>
+        </correctResponse>
     </responseDeclaration>
 
     <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+        <defaultValue>
+            <value></value>
+        </defaultValue>
     </outcomeDeclaration>
 
     <itemBody>
-        <p></p>
     </itemBody>
 
     <responseProcessing>
+        <responseCondition>
+            <responseIf>
+                <match>
+                    <variable identifier="RESPONSE"/>
+                    <correct/>
+                </match>
+                <setOutcomeValue identifier="SCORE">
+                    <baseValue baseType="float"></baseValue>
+                </setOutcomeValue>
+            </responseIf>
+            <responseElse>
+                <setOutcomeValue identifier="SCORE">
+                    <baseValue baseType="float"></baseValue>
+                </setOutcomeValue>
+            </responseElse>
+        </responseCondition>
     </responseProcessing>
 
-    <modalFeedback identifier="FEEDBACK" outcomeIdentifier="SCORE">
+    <modalFeedback identifier="FEEDBACK" outcomeIdentifier="SCORE" showHide="show">
+        <p></p>
     </modalFeedback>
 
 </assessmentItem>
