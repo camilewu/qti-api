@@ -26,7 +26,6 @@ function jsonToQtiXml(question) {
 
   switch (question.type) {
     case 'QBTextMC':
-    case 'QBTrueFalse':
       const responseId = `RESPONSE_${question.douid}`;
     
       interactionElement = itemBody.ele('choiceInteraction', {
@@ -68,9 +67,40 @@ function jsonToQtiXml(question) {
         console.warn(`Correct option not found for question ID: ${question.douid}`);
       }
       break;
+    case 'QBTrueFalse':    
+      interactionElement = itemBody.ele('choiceInteraction', {
+        responseIdentifier: `RESPONSE_${question.douid}`,
+        shuffle: 'true',
+        maxChoices: '1'
+      });
+    
+      interactionElement.ele('prompt', {}, question.question);
+     
+      const trueFalseResponseDeclaration = xmlRoot.ele('responseDeclaration', {
+        identifier: `RESPONSE_${question.douid}`,
+        cardinality: 'single',
+        baseType: 'boolean',
+      });
+      const trueFalseResponse = trueFalseResponseDeclaration.ele('correctResponse');
+      let trueFalseCorrectAnswer = question.answer.toString();
+      trueFalseResponse.ele('value', {}, trueFalseCorrectAnswer);
+    
+      interactionElement.ele('simpleChoice', { identifier: '1' }, '正確');
+      interactionElement.ele('simpleChoice', { identifier: '0' }, '錯誤');
+      interactionElement.ele('simpleChoice', { identifier: '1' }, 'True');
+      interactionElement.ele('simpleChoice', { identifier: '0' }, 'False');
+    
+      //   if(trueFalseCorrectAnswer === '1'){
+      //     trueFalseCorrectAnswer  ==='正確';
+      //   }else if(trueFalseCorrectAnswer === '0'){
+      //     trueFalseCorrectAnswer ==='錯誤';
+      //   }
+      //   interactionElement.ele('simpleChoice', { identifier: `${trueFalseCorrectAnswer}` }, trueFalseCorrectAnswer);
+      needsDefaultResponse = false;
+      break;
 
-    case 'QBRecorder':
-    case 'QBTakePhoto':
+    // case 'QBRecorder':
+    // case 'QBTakePhoto':
       // interactionElement = itemBody.ele('uploadInteraction', {
       //   responseIdentifier: `RESPONSE_${question.douid}`
       // });
@@ -94,7 +124,8 @@ function jsonToQtiXml(question) {
       });
 
       const shortAnswerCorrectResponse = shortAnswerResponseDeclaration.ele('correctResponse');
-      shortAnswerCorrectResponse.ele('value', {}, question.answer.toString());
+      let extend_correctAnswer = question.answer.toString();
+      shortAnswerCorrectResponse.ele('value', {}, extend_correctAnswer);
       needsDefaultResponse = false;
       break;
 
@@ -105,6 +136,7 @@ function jsonToQtiXml(question) {
       });
     
       interactionElement.ele('prompt', {}, question.question);
+      // let prompt = question.question.match()
     
       const fillingBlankResponseDeclaration = xmlRoot.ele('responseDeclaration', {
         identifier: `RESPONSE_${question.douid}`,
@@ -113,7 +145,6 @@ function jsonToQtiXml(question) {
       });
     
       const fillingBlankCorrectResponse = fillingBlankResponseDeclaration.ele('correctResponse');
-    
       let correctAnswer = question.question.match(/\[(.*?)\]/)[1];
       fillingBlankCorrectResponse.ele('value', {}, correctAnswer);
       needsDefaultResponse = false;
@@ -171,6 +202,8 @@ function jsonToQtiXml(question) {
 
   return xmlRoot.end({ pretty: true });
 }
+
+
 
 function createManifest(questionFiles) {
   const manifest = xmlbuilder.create('manifest', { version: '1.0', encoding: 'UTF-8' })
