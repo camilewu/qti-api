@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="972EB8B1-B297-A48F-B448-B0C68FE760D8" title="Default Title" adaptive="false" timeDependent="false">
+  <itemBody>
+    <extendedTextInteraction responseIdentifier="RESPONSE_972EB8B1-B297-A48F-B448-B0C68FE760D8" expectedLength="200">
+      <prompt>
+        <prompt>富人的____在穷苦人的深邃的眼睛里总是一件很有意思的事，可是那一天，透过这些穿着工作服和印度棉袄的人群，我仿佛看到了一个非常____的生灵，她与周围这些人的平庸形成了鲜明的对比。</prompt>
+      </prompt>
+    </extendedTextInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_972EB8B1-B297-A48F-B448-B0C68FE760D8" cardinality="single" baseType="string">
+    <correctResponse>
+      <value>快乐</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

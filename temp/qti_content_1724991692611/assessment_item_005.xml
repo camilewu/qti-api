@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="437A7565-81AE-C90E-A7F4-A144FF786A3F" title="Default Title" adaptive="false" timeDependent="false">
+  <itemBody>
+    <extendedTextInteraction responseIdentifier="RESPONSE_437A7565-81AE-C90E-A7F4-A144FF786A3F" expectedLength="200">
+      <prompt>供詞填充(14分@2分,每個答案只可使用一次)
+[反映 ,高尚, 折射 ,崇髙]
+</prompt>
+      <correctAnswer>供詞填充(14分@2分,每個答案只可使用一次)
+[反映 ,高尚, 折射 ,崇髙]
+</correctAnswer>
+    </extendedTextInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_437A7565-81AE-C90E-A7F4-A144FF786A3F" cardinality="single" baseType="string">
+    <correctResponse>
+      <value/>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

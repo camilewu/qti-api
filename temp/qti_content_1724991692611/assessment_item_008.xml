@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="5DBBC283-B0B0-B12D-D5F5-7BED0067B59C" title="Default Title" adaptive="false" timeDependent="false">
+  <itemBody>
+    <extendedTextInteraction responseIdentifier="RESPONSE_5DBBC283-B0B0-B12D-D5F5-7BED0067B59C" expectedLength="200">
+      <prompt>請根據圖片内容寫一篇200字的小作品</prompt>
+      <img src="media/media_pika.jpg"/>
+      <img src="media/media_pika.jpg"/>
+      <img src="media/media_pika.jpg"/>
+      <img src="media/bird.jpg"/>
+    </extendedTextInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_5DBBC283-B0B0-B12D-D5F5-7BED0067B59C" cardinality="single" baseType="string">
+    <correctResponse>
+      <value>1</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="FA55DC70-BF31-99DA-73DC-CF52ABB4A354" title="Default Title" adaptive="false" timeDependent="false">
+  <itemBody>
+    <choiceInteraction responseIdentifier="RESPONSE_FA55DC70-BF31-99DA-73DC-CF52ABB4A354" shuffle="true" maxChoices="1">
+      <prompt>圖片上的小鳥毛髮是什麽顏色？</prompt>
+      <simpleChoice identifier="OPTION_1">白色</simpleChoice>
+      <simpleChoice identifier="OPTION_2">黑色</simpleChoice>
+      <simpleChoice identifier="OPTION_3">黑白相間</simpleChoice>
+      <img src="media/media_pika.jpg"/>
+      <img src="media/bird.jpg"/>
+    </choiceInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_FA55DC70-BF31-99DA-73DC-CF52ABB4A354" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OPTION_3</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

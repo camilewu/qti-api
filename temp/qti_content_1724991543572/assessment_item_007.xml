@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="FCFEF279-67D5-FD01-04F0-9E4972657352" title="Default Title" adaptive="false" timeDependent="false">
+  <itemBody>
+    <choiceInteraction responseIdentifier="RESPONSE_FCFEF279-67D5-FD01-04F0-9E4972657352" shuffle="true" maxChoices="1">
+      <prompt>我是美女</prompt>
+      <simpleChoice identifier="1">正確</simpleChoice>
+      <simpleChoice identifier="0">錯誤</simpleChoice>
+    </choiceInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_FCFEF279-67D5-FD01-04F0-9E4972657352" cardinality="single" baseType="boolean">
+    <correctResponse>
+      <value>1</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>
