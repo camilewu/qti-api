@@ -7,7 +7,7 @@
     title="Sample Question" 
     adaptive="false" 
     timeDependent="false" 
-    xml:lang="en">
+    xml:lang="en-US">
 
     <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
         <correctResponse>
@@ -22,7 +22,9 @@
     </outcomeDeclaration>
 
     <itemBody>
-        <div></div>
+        <div>
+            <qh5:figure></qh5:figure>
+        </div>
     </itemBody>
 
     <responseProcessing>

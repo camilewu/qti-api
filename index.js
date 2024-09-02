@@ -42,6 +42,7 @@ function jsonToQtiXml(question) {
     const itemBody = xmlRoot.ele('itemBody');
     // const mediaElement = itemBody.ele('div');
      const pElement = itemBody.ele('div');
+     const innerElement = pElement.ele('qh5:figure')
 
     // 將媒體文件放在itembody裏面但在題型之前
     if (question.asset && question.asset.files) {
@@ -52,10 +53,10 @@ function jsonToQtiXml(question) {
           console.log('File save path:', fileSavePath);
 
           if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.png')) {
-            pElement.ele('img', { src: fileSavePath, alt: 'Image' });
+            innerElement.ele('img', { src: 'images'+'/'+ fileSavePath, alt: `${file.name}`,width:`${file.width}`,height:`${file.height}`});
           } else if (fileName.endsWith('.mp3')) {
             const audioElement = pElement.ele('audio', { controls: 'controls' });
-            audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
+            audioElement.ele('source', { uri: fileSavePath+'/', type: 'audio/mpeg' });
             // Optionally add fallback text for browsers that do not support the audio element
             audioElement.txt('Your browser does not support the audio element.');
           }
@@ -181,6 +182,7 @@ function jsonToQtiXml(question) {
       }).ele('prompt', {}, question.question);
       break;
 
+//unusual case as below:
     case 'QBToggleOptions':
       itemBody.ele('hotspotInteraction', {
         responseIdentifier: `RESPONSE_${question.douid}`,
@@ -223,6 +225,8 @@ function createManifest(questionFiles, lang = 'en') {
 
   manifest.ele('organizations');
   const resources = manifest.ele('resources');
+
+  // const questionType = questions.question.type;
 //媒體文件
   questionFiles.forEach((file, index) => {
     const resource = resources.ele('resource', {
@@ -240,9 +244,11 @@ function createManifest(questionFiles, lang = 'en') {
     general.ele('imsmd:identifier', `qti_v2_item_${index + 1}`);
 
     const title = general.ele('imsmd:title');
-    title.ele('imsmd:langstring', { 'xml:lang': lang }, `这是示例题目 #${index + 1}`);
+    title.ele('imsmd:langstring', { 'xml:lang': lang }, `這是示例題目 #${index + 1}`);
+    // title.ele('imsmd:langstring', { 'xml:lang': lang }, `這是示例題目`);
+
     const description = general.ele('imsmd:description');
-    description.ele('imsmd:langstring', { 'xml:lang': lang }, '这是一个示例题目的描述');
+    description.ele('imsmd:langstring', { 'xml:lang': lang }, '這是一個示例題目的説明');
 
     resource.ele('file', { href: file });
   });
