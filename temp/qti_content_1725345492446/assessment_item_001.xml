@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="5ED2F580-BD1C-27AD-F9FC-CA184720EAB4" title="Default Title" adaptive="false" timeDependent="false" xml:lang="en">
+  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value/>
+    </correctResponse>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value/>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <div>
+      <qh5:figure/>
+    </div>
+    <choiceInteraction responseIdentifier="RESPONSE_5ED2F580-BD1C-27AD-F9FC-CA184720EAB4" shuffle="false" maxChoices="1">
+      <prompt>下列句子中哪一句用字完全正確？
+</prompt>
+      <simpleChoice identifier="OPTION_1">金庸筆下不經世事的小龍女，不適合在陰險狡詐的江湖裡過日。</simpleChoice>
+      <simpleChoice identifier="OPTION_2">一旦工作上講求實是求事，一步一腳印，那成功遲早會是你的。</simpleChoice>
+      <simpleChoice identifier="OPTION_3">我們若老是跟著前人的腳步亦步亦驅，永遠不會有自己的成就。</simpleChoice>
+      <simpleChoice identifier="OPTION_4">他這個行事向來目中無人，姿意妄為，別人往往對他無可奈何。</simpleChoice>
+    </choiceInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_5ED2F580-BD1C-27AD-F9FC-CA184720EAB4" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OPTION_1</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

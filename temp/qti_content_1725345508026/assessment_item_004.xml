@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" identifier="20B218A3-EB3A-2B39-9C32-FF9E691B1CE7" title="Default Title" adaptive="false" timeDependent="false" xml:lang="en">
+  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value/>
+    </correctResponse>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value/>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <div>
+      <qh5:figure/>
+    </div>
+    <extendedTextInteraction responseIdentifier="RESPONSE_20B218A3-EB3A-2B39-9C32-FF9E691B1CE7" expectedLength="200">
+      <prompt>长江流域</prompt>
+    </extendedTextInteraction>
+  </itemBody>
+  <responseDeclaration identifier="RESPONSE_20B218A3-EB3A-2B39-9C32-FF9E691B1CE7" cardinality="single" baseType="string">
+    <correctResponse>
+      <value>1</value>
+    </correctResponse>
+  </responseDeclaration>
+</assessmentItem>

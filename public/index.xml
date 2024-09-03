@@ -7,7 +7,8 @@
     title="Sample Question" 
     adaptive="false" 
     timeDependent="false" 
-    xml:lang="en-US">
+    xml:lang="en-US"
+    xmlns:qh5="http://example.com/qh5">
 
     <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
         <correctResponse>

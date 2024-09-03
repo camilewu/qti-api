@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsglobal.org/xsd/imscp_v1p1" 
+xmlns:imsmd="http://www.imsglobal.org/xsd/imsmd_v1p2" 
+xmlns:imsqti="http://www.imsglobal.org/xsd/imsqti_v2p1" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+identifier="MANIFEST-QTI-6fa5ef3c-64a9-4a41-a76f-e69773ae173a" 
+xsi:schemaLocation="http://www.imsglobal.org/xsd/imscp_v1p1 imscp_v1p1.xsd http://www.imsglobal.org/xsd/imsmd_v1p2 imsmd_v1p2p2.xsd http://www.imsglobal.org/xsd/imsqti_v2p1 imsqti_v2p1.xsd">
+
+  <organizations/>
+  <resources>
+    <resource identifier="qti_item_1_62c6c9ce-b96c-4714-a27f-5ba70f7e2c23" type="imsqti_item_xmlv2p1" href="assessment_item_001.xml">
+      <metadata>
+        <schema>IMS QTI Item</schema>
+        <schemaversion>2.1</schemaversion>
+        <imsmd:lom>
+          <imsmd:general>
+            <imsmd:identifier>qti_v2_item_1</imsmd:identifier>
+            <imsmd:title>
+              <imsmd:langstring xml:lang="en">這是示例題目</imsmd:langstring>
+            </imsmd:title>
+            <imsmd:description>
+              <imsmd:langstring xml:lang="en">這是一個示例題目的説明</imsmd:langstring>
+            </imsmd:description>
+          </imsmd:general>
+          <imsmd:technical>
+						<imsmd:format>image/png</imsmd:format>
+					</imsmd:technical>
+        </imsmd:lom>
+      </metadata>
+      <file href="assessment_item_001.xml"/>
+      <file href="ukair.png"/>
+    </resource>
+
+    <!-- image -->
+    <!-- <resource identifier="images01" href="webcontent">
+			<metadata>
+				<imsmd:lom>
+					<imsmd:general>
+						<imsmd:description>
+							<imsmd:langstring xml:lang="en">Image of the United Kingdom with the
+								marked locations of Edinburgh, Glasgow, Heathrow and Manchester
+								airports.</imsmd:langstring>
+						</imsmd:description>
+					</imsmd:general>
+					<imsmd:technical>
+						<imsmd:format>image/png</imsmd:format>
+					</imsmd:technical>
+				</imsmd:lom>
+			</metadata>
+			<file href="examples/ukair.png"/>
+		</resource> -->
+  </resources>
+</manifest>

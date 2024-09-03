@@ -8,6 +8,7 @@ const path = require('path');
 const cron = require('node-cron');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
+// const { url } = require('inspector');
 const PORT = 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 
@@ -53,26 +54,13 @@ function jsonToQtiXml(question) {
           console.log('File save path:', fileSavePath);
 
           if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.png')) {
-            innerElement.ele('img', { src: 'images'+'/'+ fileSavePath, alt: `${file.name}`,width:`${file.width}`,height:`${file.height}`});
+            innerElement.ele('img', { src: '/'+ fileSavePath,width:`${file.width}`,height:`${file.height}`});
           } else if (fileName.endsWith('.mp3')) {
             const audioElement = pElement.ele('audio', { controls: 'controls' });
-            audioElement.ele('source', { uri: fileSavePath+'/', type: 'audio/mpeg' });
+            audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
             // Optionally add fallback text for browsers that do not support the audio element
             audioElement.txt('Your browser does not support the audio element.');
           }
-
-          // if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
-          //   mediaElement = itemBody.ele('object', { type: 'image/jpeg', data: fileSavePath });
-          // } else if (fileName.endsWith('.png')) {
-          //   mediaElement = itemBody.ele('object', { type: 'image/png', data: fileSavePath });
-          // } else if (fileName.endsWith('.gif')) {
-          //   mediaElement = itemBody.ele('object', { type: 'image/gif', data: fileSavePath });
-          // } else if (fileName.endsWith('.mp3')) {
-          //   mediaElement = itemBody.ele('object', { type: 'audio/mpeg', data: fileSavePath });
-          //   console.log('Audio object created:', mediaElement.name);
-          //   mediaElement.ele('param', { name: 'autoplay', value: 'false' });
-          //   mediaElement.ele('param', { name: 'controls', value: 'true' });
-          // }
         }
       }
     }
@@ -180,6 +168,14 @@ function jsonToQtiXml(question) {
         responseIdentifier: `RESPONSE_${question.douid}`,
         expectedLength: "200"
       }).ele('prompt', {}, question.question);
+
+      const shortAnswponseDeclaration = xmlRoot.ele('responseDeclaration', {
+        identifier: `RESPONSE_${question.douid}`,
+        cardinality: 'single',
+        baseType: 'string'
+      });
+      const shortCorrectResponse = shortAnswponseDeclaration.ele('correctResponse');
+      shortCorrectResponse.ele('value', {});
       break;
 
 //unusual case as below:
@@ -214,7 +210,9 @@ function jsonToQtiXml(question) {
   return xmlRoot.end({ pretty: true });
 }
 
-function createManifest(questionFiles, lang = 'en') {
+function createManifest(questionFiles, 
+  mediaFiles, 
+  lang = 'en') {
   const manifest = xmlbuilder.create('manifest', { version: '1.0', encoding: 'UTF-8' })
     .att('xmlns', 'http://www.imsglobal.org/xsd/imscp_v1p1')
     .att('xmlns:imsmd', 'http://www.imsglobal.org/xsd/imsmd_v1p2')
@@ -226,11 +224,9 @@ function createManifest(questionFiles, lang = 'en') {
   manifest.ele('organizations');
   const resources = manifest.ele('resources');
 
-  // const questionType = questions.question.type;
-//媒體文件
   questionFiles.forEach((file, index) => {
     const resource = resources.ele('resource', {
-      identifier: `qti_item_${index + 1}_${uuidv4()}`, 
+      identifier: `qti_item_${index + 1}_${uuidv4()}`,
       type: 'imsqti_item_xmlv2p1',
       href: file
     });
@@ -245,25 +241,50 @@ function createManifest(questionFiles, lang = 'en') {
 
     const title = general.ele('imsmd:title');
     title.ele('imsmd:langstring', { 'xml:lang': lang }, `這是示例題目 #${index + 1}`);
-    // title.ele('imsmd:langstring', { 'xml:lang': lang }, `這是示例題目`);
 
     const description = general.ele('imsmd:description');
     description.ele('imsmd:langstring', { 'xml:lang': lang }, '這是一個示例題目的説明');
 
     resource.ele('file', { href: file });
+    // const mediafile = req.body.file
+    // resource.ele('media', { href: })
+
+    // Add dependencies for media resources
+    mediaFiles.forEach((mediaFile, mediaIndex) => {
+      const ext = mediaFile.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'gif', 'mp3', 'png'].includes(ext)) {
+        resource.ele('dependency', { identifierref: `media_${mediaIndex + 1}_${uuidv4()}` });
+      }
+    });
+  });
+
+  // // Add media resources
+  mediaFiles.forEach((mediaFile, mediaIndex) => {
+    const ext = mediaFile.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'gif', 'mp3', 'png'].includes(ext)) {
+      const mediaResource = resources.ele('resource', {
+        identifier: `media_${mediaIndex + 1}_${uuidv4()}`,
+        type: 'webcontent',
+        href: mediaFile
+      });
+
+      const mediaMetadata = mediaResource.ele('metadata');
+      const mediaLom = mediaMetadata.ele('imsmd:lom');
+      const mediaGeneral = mediaLom.ele('imsmd:general');
+      const mediaDescription = mediaGeneral.ele('imsmd:description');
+      mediaDescription.ele('imsmd:langstring', { 'xml:lang': lang }, `這是一個示例媒體文件: ${mediaFile}`);
+
+      mediaResource.ele('file', { href: mediaFile });
+    }
   });
 
   return manifest.end({ pretty: true });
 }
 
-
-const manifestContent = createManifest(['question1.xml', 'question2.xml'], 'zh');
-// console.log(manifestContent);
-
-
 app.post('/convert', async (req, res) => {
   try {
     const questionFiles = [];
+    const mediaFiles = [];
     const subfolderName = `qti_content_${Date.now()}`;
     const subfolderPath = path.join(TEMP_DIR, subfolderName);
 
@@ -282,11 +303,12 @@ app.post('/convert', async (req, res) => {
           if (file.url) {
             const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
             const fileName = file.name.toLowerCase();
-            const mediaFileName = path.join(subfolderPath,  fileName);
+            const mediaFileName = path.join(subfolderPath, fileName);
             await fs.ensureDir(path.dirname(mediaFileName));
             const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
             await fs.writeFile(mediaFileName, response.data);
             console.log(`Saved file: ${mediaFileName}`);
+            mediaFiles.push(fileName);
           }
         });
         await Promise.all(filePromises);
@@ -295,7 +317,9 @@ app.post('/convert', async (req, res) => {
 
     await Promise.all(promises);
 
-    const manifestOutput = createManifest(questionFiles);
+    const manifestOutput = createManifest(questionFiles, 
+      mediaFiles
+    );
     const manifestFileName = 'imsmanifest.xml';
     await fs.writeFile(path.join(subfolderPath, manifestFileName), manifestOutput);
 
