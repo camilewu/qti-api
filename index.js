@@ -8,7 +8,7 @@ const path = require('path');
 const cron = require('node-cron');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
-// const { url } = require('inspector');
+const xml2js = require('xml2js');
 const PORT = 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 
@@ -54,7 +54,7 @@ function jsonToQtiXml(question) {
           console.log('File save path:', fileSavePath);
 
           if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.png')) {
-            innerElement.ele('img', { src: '/'+ fileSavePath,width:`${file.width}`,height:`${file.height}`});
+            innerElement.ele('img', { src:  fileSavePath,width:`${file.width}`,height:`${file.height}`,type: 'image/jpeg'});
           } else if (fileName.endsWith('.mp3')) {
             const audioElement = pElement.ele('audio', { controls: 'controls' });
             audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
@@ -210,9 +210,7 @@ function jsonToQtiXml(question) {
   return xmlRoot.end({ pretty: true });
 }
 
-function createManifest(questionFiles, 
-  mediaFiles, 
-  lang = 'en') {
+async function createManifest(questionFiles, lang = 'en') {
   const manifest = xmlbuilder.create('manifest', { version: '1.0', encoding: 'UTF-8' })
     .att('xmlns', 'http://www.imsglobal.org/xsd/imscp_v1p1')
     .att('xmlns:imsmd', 'http://www.imsglobal.org/xsd/imsmd_v1p2')
@@ -224,9 +222,11 @@ function createManifest(questionFiles,
   manifest.ele('organizations');
   const resources = manifest.ele('resources');
 
-  questionFiles.forEach((file, index) => {
+  for (const { file, mediaFiles } of questionFiles) {
+    const dynamicTitle = file.replace('assessment_', '').replace('.xml', '');
+
     const resource = resources.ele('resource', {
-      identifier: `qti_item_${index + 1}_${uuidv4()}`,
+      identifier: `qti_item_${uuidv4()}`,
       type: 'imsqti_item_xmlv2p1',
       href: file
     });
@@ -237,46 +237,22 @@ function createManifest(questionFiles,
 
     const lom = metadata.ele('imsmd:lom');
     const general = lom.ele('imsmd:general');
-    general.ele('imsmd:identifier', `qti_v2_item_${index + 1}`);
+    general.ele('imsmd:identifier', `qti_v2_item_${uuidv4()}`);
 
     const title = general.ele('imsmd:title');
-    title.ele('imsmd:langstring', { 'xml:lang': lang }, `這是示例題目 #${index + 1}`);
+    title.ele('imsmd:langstring', { 'xml:lang': lang }, dynamicTitle);
 
     const description = general.ele('imsmd:description');
     description.ele('imsmd:langstring', { 'xml:lang': lang }, '這是一個示例題目的説明');
 
+    // 添加 assessment 文件
     resource.ele('file', { href: file });
-    // const mediafile = req.body.file
-    // resource.ele('media', { href: })
 
-    // Add dependencies for media resources
-    mediaFiles.forEach((mediaFile, mediaIndex) => {
-      const ext = mediaFile.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'gif', 'mp3', 'png'].includes(ext)) {
-        resource.ele('dependency', { identifierref: `media_${mediaIndex + 1}_${uuidv4()}` });
-      }
-    });
-  });
-
-  // // Add media resources
-  mediaFiles.forEach((mediaFile, mediaIndex) => {
-    const ext = mediaFile.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'gif', 'mp3', 'png'].includes(ext)) {
-      const mediaResource = resources.ele('resource', {
-        identifier: `media_${mediaIndex + 1}_${uuidv4()}`,
-        type: 'webcontent',
-        href: mediaFile
-      });
-
-      const mediaMetadata = mediaResource.ele('metadata');
-      const mediaLom = mediaMetadata.ele('imsmd:lom');
-      const mediaGeneral = mediaLom.ele('imsmd:general');
-      const mediaDescription = mediaGeneral.ele('imsmd:description');
-      mediaDescription.ele('imsmd:langstring', { 'xml:lang': lang }, `這是一個示例媒體文件: ${mediaFile}`);
-
-      mediaResource.ele('file', { href: mediaFile });
+    // 添加媒體文件
+    for (const mediaFile of mediaFiles) {
+      resource.ele('file', { href: mediaFile });
     }
-  });
+  }
 
   return manifest.end({ pretty: true });
 }
@@ -284,7 +260,6 @@ function createManifest(questionFiles,
 app.post('/convert', async (req, res) => {
   try {
     const questionFiles = [];
-    const mediaFiles = [];
     const subfolderName = `qti_content_${Date.now()}`;
     const subfolderPath = path.join(TEMP_DIR, subfolderName);
 
@@ -296,30 +271,34 @@ app.post('/convert', async (req, res) => {
       const filePath = path.join(subfolderPath, fileName);
 
       await fs.writeFile(filePath, xmlOutput);
-      questionFiles.push(fileName);
+
+      const mediaFiles = [];
 
       if (question.asset && question.asset.files) {
         const filePromises = question.asset.files.map(async file => {
           if (file.url) {
             const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
-            const fileName = file.name.toLowerCase();
-            const mediaFileName = path.join(subfolderPath, fileName);
-            await fs.ensureDir(path.dirname(mediaFileName));
+            const mediaFileName = file.name.toLowerCase();  // 這裡使用相對路徑
+            const mediaFilePath = path.join(subfolderPath, mediaFileName);
+            await fs.ensureDir(path.dirname(mediaFilePath));
             const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
-            await fs.writeFile(mediaFileName, response.data);
-            console.log(`Saved file: ${mediaFileName}`);
-            mediaFiles.push(fileName);
+            await fs.writeFile(mediaFilePath, response.data);
+            console.log(`Saved file: ${mediaFilePath}`);
+
+            // 將媒體文件的相對路徑加入到 mediaFiles
+            mediaFiles.push(mediaFileName);
           }
         });
+
         await Promise.all(filePromises);
       }
+
+      questionFiles.push({ file: fileName, mediaFiles });  // 存儲 assessment 文件名和對應的媒體文件
     });
 
     await Promise.all(promises);
 
-    const manifestOutput = createManifest(questionFiles, 
-      mediaFiles
-    );
+    const manifestOutput = await createManifest(questionFiles);
     const manifestFileName = 'imsmanifest.xml';
     await fs.writeFile(path.join(subfolderPath, manifestFileName), manifestOutput);
 
@@ -330,7 +309,7 @@ app.post('/convert', async (req, res) => {
 
     output.on('close', async () => {
       console.log(`ZIP file ${zipFileName} created successfully.`);
-      await res.download(zipFilePath);
+      res.download(zipFilePath);
       await fs.remove(subfolderPath);
     });
 
