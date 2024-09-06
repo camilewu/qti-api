@@ -8,7 +8,7 @@ const path = require('path');
 const cron = require('node-cron');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
-const xml2js = require('xml2js');
+// const xml2js = require('xml2js');
 const PORT = 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 
@@ -41,9 +41,11 @@ function jsonToQtiXml(question) {
 
   // 創建 itemBody 
     const itemBody = xmlRoot.ele('itemBody');
-    // const mediaElement = itemBody.ele('div');
-     const pElement = itemBody.ele('div');
-     const innerElement = pElement.ele('qh5:figure')
+    const pElement = itemBody.ele('div');
+    const innerElement = pElement.ele('qh5:figure')
+
+    //設定question有asset的元素
+    // const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];
 
     // 將媒體文件放在itembody裏面但在題型之前
     if (question.asset && question.asset.files) {
@@ -71,35 +73,67 @@ function jsonToQtiXml(question) {
     case 'QBTextMC':
       const responseId = `RESPONSE_${question.douid}`;
       const interactionElement = itemBody.ele('choiceInteraction', {
-        responseIdentifier: responseId,
-        shuffle: 'false',
-        maxChoices: '1'
+          responseIdentifier: responseId,
+          shuffle: 'false',
+          maxChoices: '1'
       });
       interactionElement.ele('prompt', {}, question.question);
-
+  
       let correctOptionIndex = null;
       let optionIndex = 1;
+  
       for (let i = 1; i <= question.totalOptions; i++) {
-        const optionKey = `opt${i}`;
-        const optionValue = question[optionKey];
-        if (optionValue) {
-          interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
-          if (i.toString() === question.answer) {
-            correctOptionIndex = `OPTION_${optionIndex}`;
+          const optionKey = `opt${i}`;
+          const optionValue = question[optionKey];
+          const optionAssetKey = `${optionKey}_asset`; // e.g., opt1_asset, opt2_asset
+          const optionAsset = question[optionAssetKey]; // 加個key
+  
+          if (optionValue) {
+              const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
+              
+              // 看multiple opt的assets裏面是否有媒體文件，如果有就加進去
+              if (optionAsset && optionAsset.files && optionAsset.files.length > 0) {
+                  for (const file of optionAsset.files) {
+                      if (file.url) {
+                          const fileExtension = file.url.split('.').pop().toLowerCase(); //媒體文件的名字
+                          const imageExtensions = ['jpg', 'jpeg', 'gif', 'png']; 
+                          if (imageExtensions.includes(fileExtension)) {
+                              simpleChoiceElement.ele('img', {
+                                  src: `https://oka.blob.core.windows.net/media/${file.url}`,
+                                  alt: file.name || `Option ${optionIndex} Image`,
+                                  width:`${file.width}`,
+                                  height:`${file.height}`
+                              });
+                          }
+                         else if(fileExtension.endsWith('mp3')){
+                          simpleChoiceElement.ele('source',{
+                            src: `https://oka.blob.core.windows.net/media/${file.url}`,
+                            width:`${file.width}`,
+                            height:`${file.height}`
+                          })
+                         }
+                      }
+                  }
+              }
+  
+              if (i.toString() === question.answer) {
+                  correctOptionIndex = `OPTION_${optionIndex}`;
+              }
+  
+              optionIndex++;
           }
-          optionIndex++;
-        }
       }
+  
       if (correctOptionIndex) {
-        const responseDeclaration = xmlRoot.ele('responseDeclaration', {
-          identifier: responseId,
-          cardinality: 'single',
-          baseType: 'identifier'
-        });
-        const correctResponse = responseDeclaration.ele('correctResponse');
-        correctResponse.ele('value', {}, correctOptionIndex);
+          const responseDeclaration = xmlRoot.ele('responseDeclaration', {
+              identifier: responseId,
+              cardinality: 'single',
+              baseType: 'identifier'
+          });
+          const correctResponse = responseDeclaration.ele('correctResponse');
+          correctResponse.ele('value', {}, correctOptionIndex);
       } else {
-        console.warn(`Correct option not found for question ID: ${question.douid}`);
+          console.warn(`Correct option not found for question ID: ${question.douid}`);
       }
       break;
 
@@ -269,28 +303,33 @@ app.post('/convert', async (req, res) => {
       const xmlOutput = jsonToQtiXml(question);
       const fileName = `assessment_item_${String(index + 1).padStart(3, '0')}.xml`;
       const filePath = path.join(subfolderPath, fileName);
-
       await fs.writeFile(filePath, xmlOutput);
 
       const mediaFiles = [];
+      const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];//加入multuple opt
 
-      if (question.asset && question.asset.files) {
-        const filePromises = question.asset.files.map(async file => {
-          if (file.url) {
-            const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
-            const mediaFileName = file.name.toLowerCase();  // 這裡使用相對路徑
-            const mediaFilePath = path.join(subfolderPath, mediaFileName);
-            await fs.ensureDir(path.dirname(mediaFilePath));
-            const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
-            await fs.writeFile(mediaFilePath, response.data);
-            console.log(`Saved file: ${mediaFilePath}`);
+      for (const key of assetKeys) {
+          if (question[key] && question[key].files) {
+              const filePromises = question[key].files.map(async file => {
+                  if (file.url) {
+                      const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
+                      const mediaFileName = file.name.toLowerCase();  // 使用文件名稱作為保存名稱
+                      const mediaFilePath = path.join(subfolderPath, mediaFileName);
+                      
+                      // 確保保存文件的目錄存在
+                      await fs.ensureDir(path.dirname(mediaFilePath));
+                      // 下載文件
+                      const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
+                      // 將文件寫入zip
+                      await fs.writeFile(mediaFilePath, response.data);
+                      console.log(`Saved file: ${mediaFilePath}`);
+                      mediaFiles.push(mediaFileName);
 
-            // 將媒體文件的相對路徑加入到 mediaFiles
-            mediaFiles.push(mediaFileName);
+                  }
+              });
+              // 等待所有文件的下載和保存完成
+              await Promise.all(filePromises);
           }
-        });
-
-        await Promise.all(filePromises);
       }
 
       questionFiles.push({ file: fileName, mediaFiles });  // 存儲 assessment 文件名和對應的媒體文件
