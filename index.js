@@ -8,7 +8,6 @@ const path = require('path');
 const cron = require('node-cron');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
-// const xml2js = require('xml2js');
 const PORT = 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 
@@ -83,45 +82,46 @@ function jsonToQtiXml(question) {
       let optionIndex = 1;
   
       for (let i = 1; i <= question.totalOptions; i++) {
-          const optionKey = `opt${i}`;
-          const optionValue = question[optionKey];
-          const optionAssetKey = `${optionKey}_asset`; // e.g., opt1_asset, opt2_asset
-          const optionAsset = question[optionAssetKey]; // 加個key
-  
-          if (optionValue) {
-              const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
-              
-              // 看multiple opt的assets裏面是否有媒體文件，如果有就加進去
-              if (optionAsset && optionAsset.files && optionAsset.files.length > 0) {
-                  for (const file of optionAsset.files) {
-                      if (file.url) {
-                          const fileExtension = file.url.split('.').pop().toLowerCase(); //媒體文件的名字
-                          const imageExtensions = ['jpg', 'jpeg', 'gif', 'png']; 
-                          if (imageExtensions.includes(fileExtension)) {
-                              simpleChoiceElement.ele('img', {
-                                  src: `https://oka.blob.core.windows.net/media/${file.url}`,
-                                  alt: file.name || `Option ${optionIndex} Image`,
-                                  width:`${file.width}`,
-                                  height:`${file.height}`
-                              });
-                          }
-                         else if(fileExtension.endsWith('mp3')){
-                          simpleChoiceElement.ele('source',{
-                            src: `https://oka.blob.core.windows.net/media/${file.url}`,
-                            width:`${file.width}`,
-                            height:`${file.height}`
-                          })
-                         }
-                      }
-                  }
+        const optionKey = `opt${i}`;
+        const optionValue = question[optionKey];
+        const optionAssetKey = `${optionKey}_asset`; // e.g., opt1_asset, opt2_asset
+        const optionAsset = question[optionAssetKey]; // 加個key
+
+        if (optionValue) {
+          const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
+          
+          // 看multiple opt的assets裏面是否有媒體文件，如果有就加進去
+          if (optionAsset && optionAsset.files && optionAsset.files.length > 0) {
+            for (const file of optionAsset.files) {
+              if (file.url) {
+                const fileExtension = file.url.split('.').pop().toLowerCase(); //媒體文件的名字
+                const imageExtensions = ['jpg', 'jpeg', 'gif', 'png']; 
+
+                console.log(`Processing file: ${file.url} with extension: ${fileExtension}`);
+
+                if (imageExtensions.includes(fileExtension) && file.url) {
+                  simpleChoiceElement.ele('img', {
+                    src: `https://oka.blob.core.windows.net/media/${file.url}`,
+                    alt: file.name || `Option ${optionIndex} Image`,
+                    width:`${file.width}`,
+                    height:`${file.height}`
+                  });
+                }
+                else if(fileExtension.endsWith('mp3')){
+                simpleChoiceElement.ele('source',{
+                  src: `https://oka.blob.core.windows.net/media/${file.url}`,
+                  width:`${file.width}`,
+                  height:`${file.height}`
+                })
+                }
               }
-  
-              if (i.toString() === question.answer) {
-                  correctOptionIndex = `OPTION_${optionIndex}`;
-              }
-  
-              optionIndex++;
+            }
           }
+          if (i.toString() === question.answer) {
+            correctOptionIndex = `OPTION_${optionIndex}`;
+          }
+          optionIndex++;
+        }
       }
   
       if (correctOptionIndex) {
@@ -239,6 +239,7 @@ function jsonToQtiXml(question) {
 
     default:
       console.warn(`Unknown question type: ${question.type}`);
+
   }
 
   return xmlRoot.end({ pretty: true });
@@ -257,7 +258,7 @@ async function createManifest(questionFiles, lang = 'en') {
   const resources = manifest.ele('resources');
 
   for (const { file, mediaFiles } of questionFiles) {
-    const dynamicTitle = file.replace('assessment_', '').replace('.xml', '');
+    const dynamicTitle = file.replace('assessment_', '').replace('item','question').replace('.xml', '');
 
     const resource = resources.ele('resource', {
       identifier: `qti_item_${uuidv4()}`,
@@ -300,39 +301,38 @@ app.post('/convert', async (req, res) => {
     await fs.ensureDir(subfolderPath);
 
     const promises = req.body.questions.map(async (question, index) => {
-      const xmlOutput = jsonToQtiXml(question);
-      const fileName = `assessment_item_${String(index + 1).padStart(3, '0')}.xml`;
-      const filePath = path.join(subfolderPath, fileName);
-      await fs.writeFile(filePath, xmlOutput);
+        const xml = jsonToQtiXml(question);
+        const fileName = `assessment_item_${String(index + 1).padStart(3, '0')}.xml`;
+        const filePath = path.join(subfolderPath, fileName);
 
-      const mediaFiles = [];
-      const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];//加入multuple opt
+        await fs.writeFile(filePath, xml);
+        const mediaFiles = []; // Declare mediaFiles here
+        questionFiles.push({
+          file: fileName,mediaFiles
+        });
 
-      for (const key of assetKeys) {
+        const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];
+
+        for (const key of assetKeys) {
           if (question[key] && question[key].files) {
-              const filePromises = question[key].files.map(async file => {
-                  if (file.url) {
-                      const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
-                      const mediaFileName = file.name.toLowerCase();  // 使用文件名稱作為保存名稱
-                      const mediaFilePath = path.join(subfolderPath, mediaFileName);
-                      
-                      // 確保保存文件的目錄存在
-                      await fs.ensureDir(path.dirname(mediaFilePath));
-                      // 下載文件
-                      const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
-                      // 將文件寫入zip
-                      await fs.writeFile(mediaFilePath, response.data);
-                      console.log(`Saved file: ${mediaFilePath}`);
-                      mediaFiles.push(mediaFileName);
+            const filePromises = question[key].files.map(async file => {
+              if (file.url) {
+                const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
+                const mediaFileName = file.name.toLowerCase();
+                const mediaFilePath = path.join(subfolderPath, mediaFileName);
 
-                  }
-              });
-              // 等待所有文件的下載和保存完成
-              await Promise.all(filePromises);
+                await fs.ensureDir(path.dirname(mediaFilePath));
+                const response = await axios.get(fullUrl, {
+                  responseType: 'arraybuffer'
+                });
+                await fs.writeFile(mediaFilePath, response.data);
+                console.log(`Saved file: ${mediaFilePath}`);
+                mediaFiles.push(mediaFileName);
+              } 
+            });
+            await Promise.all(filePromises);
           }
-      }
-
-      questionFiles.push({ file: fileName, mediaFiles });  // 存儲 assessment 文件名和對應的媒體文件
+        }
     });
 
     await Promise.all(promises);
@@ -347,8 +347,15 @@ app.post('/convert', async (req, res) => {
     const archive = archiver('zip');
 
     output.on('close', async () => {
-      console.log(`ZIP file ${zipFileName} created successfully.`);
-      res.download(zipFilePath);
+      const zipFileBuffer = await fs.readFile(zipFilePath);
+      const zipBase64 = zipFileBuffer.toString('base64');
+      const dataUrl = `data:application/zip;base64,${zipBase64}`;
+
+      res.status(200).json({
+        message: "Conversion successful",
+        zipDataUrl: dataUrl
+    });
+
       await fs.remove(subfolderPath);
     });
 
@@ -364,6 +371,7 @@ app.post('/convert', async (req, res) => {
     res.status(500).send('Error converting JSON to XML: ' + error.message);
   }
 });
+
 
 cron.schedule('0 0 * * *', async () => {
   try {
