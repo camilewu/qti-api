@@ -25,62 +25,58 @@ function jsonToQtiXml(question) {
     .att('timeDependent', 'false')
     .att('xml:lang', 'en');
 
-      // 添加responseDeclaration 和 outcomeDeclaration
-    xmlRoot.ele('responseDeclaration', {
-      identifier: 'RESPONSE',
-      cardinality: 'single',
-      baseType: 'identifier'
-    }).ele('correctResponse').ele('value', {}, '');
+  // 添加responseDeclaration 和 outcomeDeclaration
+  xmlRoot.ele('responseDeclaration', {
+    identifier: 'RESPONSE',
+    cardinality: 'single',
+    baseType: 'identifier'
+  }).ele('correctResponse').ele('value', {}, '');
 
-    xmlRoot.ele('outcomeDeclaration', {
-      identifier: 'SCORE',
-      cardinality: 'single',
-      baseType: 'float'
-    }).ele('defaultValue').ele('value', {}, '');
+  xmlRoot.ele('outcomeDeclaration', {
+    identifier: 'SCORE',
+    cardinality: 'single',
+    baseType: 'float'
+  }).ele('defaultValue').ele('value', {}, '');
 
   // 創建 itemBody 
-    const itemBody = xmlRoot.ele('itemBody');
-    const pElement = itemBody.ele('div');
-    const innerElement = pElement.ele('qh5:figure')
+  const itemBody = xmlRoot.ele('itemBody');
+  const pElement = itemBody.ele('div');
+  const innerElement = pElement.ele('qh5:figure');
 
-    //設定question有asset的元素
-    // const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];
+  // 將媒體文件放在itembody裏面但在題型之前
+  if (question.asset && question.asset.files) {
+    for (const file of question.asset.files) {
+      if (file.url) {
+        const fileName = file.name.toLowerCase();
+        const fileSavePath = path.posix.join(fileName);
+        console.log('File save path:', fileSavePath);
 
-    // 將媒體文件放在itembody裏面但在題型之前
-    if (question.asset && question.asset.files) {
-      for (const file of question.asset.files) {
-        if (file.url) {
-          const fileName = file.name.toLowerCase();
-          const fileSavePath = path.posix.join(fileName);
-          console.log('File save path:', fileSavePath);
-
-          if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.png')) {
-            innerElement.ele('img', { src:  fileSavePath,width:`${file.width}`,height:`${file.height}`,type: 'image/jpeg'});
-          } else if (fileName.endsWith('.mp3')) {
-            const audioElement = pElement.ele('audio', { controls: 'controls' });
-            audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
-            // Optionally add fallback text for browsers that do not support the audio element
-            audioElement.txt('Your browser does not support the audio element.');
-          }
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.png')) {
+          innerElement.ele('img', { src: fileSavePath, width: `${file.width}`, height: `${file.height}`, type: 'image/jpeg' });
+        } else if (fileName.endsWith('.mp3')) {
+          const audioElement = pElement.ele('audio', { controls: 'controls' });
+          audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
+          // Optionally add fallback text for browsers that do not support the audio element
+          audioElement.txt('Your browser does not support the audio element.');
         }
       }
     }
-    
+  }
 
   // 問題類型
   switch (question.type) {
     case 'QBTextMC':
       const responseId = `RESPONSE_${question.douid}`;
       const interactionElement = itemBody.ele('choiceInteraction', {
-          responseIdentifier: responseId,
-          shuffle: 'false',
-          maxChoices: '1'
+        responseIdentifier: responseId,
+        shuffle: 'false',
+        maxChoices: '1'
       });
       interactionElement.ele('prompt', {}, question.question);
-  
+
       let correctOptionIndex = null;
       let optionIndex = 1;
-  
+
       for (let i = 1; i <= question.totalOptions; i++) {
         const optionKey = `opt${i}`;
         const optionValue = question[optionKey];
@@ -89,13 +85,13 @@ function jsonToQtiXml(question) {
 
         if (optionValue) {
           const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
-          
+
           // 看multiple opt的assets裏面是否有媒體文件，如果有就加進去
           if (optionAsset && optionAsset.files && optionAsset.files.length > 0) {
             for (const file of optionAsset.files) {
               if (file.url) {
                 const fileExtension = file.url.split('.').pop().toLowerCase(); //媒體文件的名字
-                const imageExtensions = ['jpg', 'jpeg', 'gif', 'png']; 
+                const imageExtensions = ['jpg', 'jpeg', 'gif', 'png'];
 
                 console.log(`Processing file: ${file.url} with extension: ${fileExtension}`);
 
@@ -103,16 +99,15 @@ function jsonToQtiXml(question) {
                   simpleChoiceElement.ele('img', {
                     src: `https://oka.blob.core.windows.net/media/${file.url}`,
                     alt: file.name || `Option ${optionIndex} Image`,
-                    width:`${file.width}`,
-                    height:`${file.height}`
+                    width: `${file.width}`,
+                    height: `${file.height}`
                   });
-                }
-                else if(fileExtension.endsWith('mp3')){
-                simpleChoiceElement.ele('source',{
-                  src: `https://oka.blob.core.windows.net/media/${file.url}`,
-                  width:`${file.width}`,
-                  height:`${file.height}`
-                })
+                } else if (fileExtension.endsWith('mp3')) {
+                  simpleChoiceElement.ele('source', {
+                    src: `https://oka.blob.core.windows.net/media/${file.url}`,
+                    width: `${file.width}`,
+                    height: `${file.height}`
+                  });
                 }
               }
             }
@@ -123,17 +118,17 @@ function jsonToQtiXml(question) {
           optionIndex++;
         }
       }
-  
+
       if (correctOptionIndex) {
-          const responseDeclaration = xmlRoot.ele('responseDeclaration', {
-              identifier: responseId,
-              cardinality: 'single',
-              baseType: 'identifier'
-          });
-          const correctResponse = responseDeclaration.ele('correctResponse');
-          correctResponse.ele('value', {}, correctOptionIndex);
+        const responseDeclaration = xmlRoot.ele('responseDeclaration', {
+          identifier: responseId,
+          cardinality: 'single',
+          baseType: 'identifier'
+        });
+        const correctResponse = responseDeclaration.ele('correctResponse');
+        correctResponse.ele('value', {}, correctOptionIndex);
       } else {
-          console.warn(`Correct option not found for question ID: ${question.douid}`);
+        console.warn(`Correct option not found for question ID: ${question.douid}`);
       }
       break;
 
@@ -212,34 +207,8 @@ function jsonToQtiXml(question) {
       shortCorrectResponse.ele('value', {});
       break;
 
-//unusual case as below:
-    case 'QBToggleOptions':
-      itemBody.ele('hotspotInteraction', {
-        responseIdentifier: `RESPONSE_${question.douid}`,
-        maxChoices: "1"
-      }).ele('prompt', {}, question.question);
-      break;
-
-    case 'QBRecorder':
-    case 'QBTakePhoto':
-      itemBody.ele('uploadInteraction', {
-        responseIdentifier: `RESPONSE_${question.douid}`
-      }).ele('prompt', {}, question.question);
-      break;
-
-    case 'QBDragLine':
-    case 'DragDropA':
-    case 'DragDropC':
-      itemBody.ele('associateInteraction', {
-        responseIdentifier: `RESPONSE_${question.douid}`,
-        shuffle: "false",
-        maxAssociations: "3"
-      }).ele('prompt', {}, question.question);
-      break;
-
     default:
       console.warn(`Unknown question type: ${question.type}`);
-
   }
 
   return xmlRoot.end({ pretty: true });
@@ -258,7 +227,8 @@ async function createManifest(questionFiles, lang = 'en') {
   const resources = manifest.ele('resources');
 
   for (const { file, mediaFiles } of questionFiles) {
-    const dynamicTitle = file.replace('assessment_', '').replace('item','question').replace('.xml', '');
+
+    const dynamicTitle = file.replace('assessment_', '').replace('item', 'question').replace('.xml', '');
 
     const resource = resources.ele('resource', {
       identifier: `qti_item_${uuidv4()}`,
@@ -294,45 +264,50 @@ async function createManifest(questionFiles, lang = 'en') {
 
 app.post('/convert', async (req, res) => {
   try {
+    const unsupportedTypes = ['QBToggleOptions', 'QBRecorder', 'QBTakePhoto', 'QBDragLine', 'DragDropA', 'DragDropC'];
+
+    // 過濾不支持的題型
+    const validQuestions = req.body.questions.filter(question => !unsupportedTypes.includes(question.type));
+
     const questionFiles = [];
     const subfolderName = `qti_content_${Date.now()}`;
     const subfolderPath = path.join(TEMP_DIR, subfolderName);
 
     await fs.ensureDir(subfolderPath);
 
-    const promises = req.body.questions.map(async (question, index) => {
-        const xml = jsonToQtiXml(question);
-        const fileName = `assessment_item_${String(index + 1).padStart(3, '0')}.xml`;
-        const filePath = path.join(subfolderPath, fileName);
+    const promises = validQuestions.map(async (question, index) => {
+      const xml = jsonToQtiXml(question);
+      const fileName = `assessment_item_${String(index + 1).padStart(3, '0')}.xml`;
+      const filePath = path.join(subfolderPath, fileName);
 
-        await fs.writeFile(filePath, xml);
-        const mediaFiles = []; // Declare mediaFiles here
-        questionFiles.push({
-          file: fileName,mediaFiles
-        });
+      await fs.writeFile(filePath, xml);
+      const mediaFiles = []; // Declare mediaFiles here
+      questionFiles.push({
+        file: fileName, mediaFiles
+      });
 
-        const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];
+      const assetKeys = ['asset', 'opt1_asset', 'opt2_asset', 'opt3_asset', 'opt4_asset'];
 
-        for (const key of assetKeys) {
-          if (question[key] && question[key].files) {
-            const filePromises = question[key].files.map(async file => {
-              if (file.url) {
-                const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
-                const mediaFileName = file.name.toLowerCase();
-                const mediaFilePath = path.join(subfolderPath, mediaFileName);
+      for (const key of assetKeys) {
+        if (question[key] && question[key].files) {
+          const filePromises = question[key].files.map(async file => {
+            if (file.url) {
+              const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
+              const mediaFileName = file.name.toLowerCase();
+              const mediaFilePath = path.join(subfolderPath, mediaFileName);
 
-                await fs.ensureDir(path.dirname(mediaFilePath));
-                const response = await axios.get(fullUrl, {
-                  responseType: 'arraybuffer'
-                });
-                await fs.writeFile(mediaFilePath, response.data);
-                console.log(`Saved file: ${mediaFilePath}`);
-                mediaFiles.push(mediaFileName);
-              } 
-            });
-            await Promise.all(filePromises);
-          }
+              await fs.ensureDir(path.dirname(mediaFilePath));
+              const response = await axios.get(fullUrl, {
+                responseType: 'arraybuffer'
+              });
+              await fs.writeFile(mediaFilePath, response.data);
+              console.log(`Saved file: ${mediaFilePath}`);
+              mediaFiles.push(mediaFileName);
+            }
+          });
+          await Promise.all(filePromises);
         }
+      }
     });
 
     await Promise.all(promises);
@@ -354,7 +329,7 @@ app.post('/convert', async (req, res) => {
       res.status(200).json({
         message: "Conversion successful",
         zipDataUrl: dataUrl
-    });
+      });
 
       await fs.remove(subfolderPath);
     });
@@ -371,7 +346,6 @@ app.post('/convert', async (req, res) => {
     res.status(500).send('Error converting JSON to XML: ' + error.message);
   }
 });
-
 
 cron.schedule('0 0 * * *', async () => {
   try {
@@ -391,7 +365,7 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-app.get('/', function(req, res){
+app.get('/', function (req, res) {
   res.set('Access-Control-Allow-Origin', '*');
   res.end('QTI converted successfully');
 });
@@ -402,7 +376,7 @@ app.listen(PORT, () => {
 
 app.use(express.static("./public"));
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.status(404).send('Page not found');
 });
 
