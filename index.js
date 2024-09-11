@@ -266,8 +266,17 @@ app.post('/convert', async (req, res) => {
   try {
     const unsupportedTypes = ['QBToggleOptions', 'QBRecorder', 'QBTakePhoto', 'QBDragLine', 'DragDropA', 'DragDropC'];
 
-    // 過濾不支持的題型
+    // 分解可支持及不支持的題型
+    const unsupportedQuestions = req.body.questions.filter(question => unsupportedTypes.includes(question.type));
     const validQuestions = req.body.questions.filter(question => !unsupportedTypes.includes(question.type));
+
+    // 如果沒有支持題型則直接400
+    if (validQuestions.length === 0) {
+      return res.status(400).json({
+        message: "All questions are of unsupported types.",
+        unsupportedQuestions
+      });
+    }
 
     const questionFiles = [];
     const subfolderName = `qti_content_${Date.now()}`;
@@ -312,10 +321,12 @@ app.post('/convert', async (req, res) => {
 
     await Promise.all(promises);
 
+    // Create the manifest file
     const manifestOutput = await createManifest(questionFiles);
     const manifestFileName = 'imsmanifest.xml';
     await fs.writeFile(path.join(subfolderPath, manifestFileName), manifestOutput);
 
+    // Create the ZIP file
     const zipFileName = `${subfolderName}.zip`;
     const zipFilePath = path.join(TEMP_DIR, zipFileName);
     const output = fs.createWriteStream(zipFilePath);
@@ -326,11 +337,14 @@ app.post('/convert', async (req, res) => {
       const zipBase64 = zipFileBuffer.toString('base64');
       const dataUrl = `data:application/zip;base64,${zipBase64}`;
 
+      // response:顯示convert成功以及不支持的題型
       res.status(200).json({
         message: "Conversion successful",
-        zipDataUrl: dataUrl
+        zipDataUrl: dataUrl,
+        unsupportedQuestions 
       });
 
+      // Clean up temporary files
       await fs.remove(subfolderPath);
     });
 
