@@ -47,7 +47,9 @@ function jsonToQtiXml(question) {
   if (question.asset && question.asset.files) {
     for (const file of question.asset.files) {
       if (file.url) {
-        const fileName = file.name.toLowerCase();
+        const fileName = (file.name ? file.name.toLowerCase() : 'unknown_file');
+
+        // const fileName = file.name.toLowerCase();
         const fileSavePath = path.posix.join(fileName);
         console.log('File save path:', fileSavePath);
 
@@ -302,7 +304,7 @@ app.post('/convert', async (req, res) => {
           const filePromises = question[key].files.map(async file => {
             if (file.url) {
               const fullUrl = `https://oka.blob.core.windows.net/media/${file.url}`;
-              const mediaFileName = file.name.toLowerCase();
+              const mediaFileName = (file.name ? file.name.toLowerCase() : path.basename(file.url).toLowerCase());
               const mediaFilePath = path.join(subfolderPath, mediaFileName);
 
               await fs.ensureDir(path.dirname(mediaFilePath));
