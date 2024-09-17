@@ -266,11 +266,12 @@ async function createManifest(questionFiles, lang = 'en') {
 
 app.post('/convert', async (req, res) => {
   try {
-    const unsupportedTypes = ['QBToggleOptions', 'QBRecorder', 'QBTakePhoto', 'QBDragLine', 'DragDropA', 'DragDropC'];
+    // const unsupportedTypes = ['QBToggleOptions', 'QBRecorder', 'QBTakePhoto', 'QBDragLine', 'DragDropA', 'DragDropC'];
+    const validTypes = ['QBTextMC','QBTrueFalse','QBShortAnswer','QBLongQuestion','QBFillingBlank','QBInfoBlock'];
 
     // 分解可支持及不支持的題型
-    const unsupportedQuestions = req.body.questions.filter(question => unsupportedTypes.includes(question.type));
-    const validQuestions = req.body.questions.filter(question => !unsupportedTypes.includes(question.type));
+    const unsupportedQuestions = req.body.questions.filter(question => !validTypes.includes(question.type));
+    const validQuestions = req.body.questions.filter(question => validTypes.includes(question.type));
 
     // 如果沒有支持題型則直接400
     if (validQuestions.length === 0) {
