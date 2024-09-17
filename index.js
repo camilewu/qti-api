@@ -271,6 +271,11 @@ app.post('/convert', async (req, res) => {
 
     // 分解可支持及不支持的題型
     const unsupportedQuestions = req.body.questions.filter(question => !validTypes.includes(question.type));
+    unsupportedQuestions.forEach(question => {
+      if (question.type === 'QBTakePhoto') {
+        question.answer = '1';
+      }
+    });
     const validQuestions = req.body.questions.filter(question => validTypes.includes(question.type));
 
     // 如果沒有支持題型則直接400
