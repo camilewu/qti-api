@@ -38,18 +38,16 @@ function jsonToQtiXml(question) {
     baseType: 'float'
   }).ele('defaultValue').ele('value', {}, '');
 
-  // 創建 itemBody 
+  // 創建 itemBody
   const itemBody = xmlRoot.ele('itemBody');
   const pElement = itemBody.ele('div');
   const innerElement = pElement.ele('qh5:figure');
 
-  // 將媒體文件放在itembody裏面但在題型之前
+  // 將媒體文件放在 itemBody 里面但在題型之前
   if (question.asset && question.asset.files) {
     for (const file of question.asset.files) {
       if (file.url) {
         const fileName = (file.name ? file.name.toLowerCase() : 'unknown_file');
-
-        // const fileName = file.name.toLowerCase();
         const fileSavePath = path.posix.join(fileName);
         console.log('File save path:', fileSavePath);
 
@@ -58,7 +56,6 @@ function jsonToQtiXml(question) {
         } else if (fileName.endsWith('.mp3')) {
           const audioElement = pElement.ele('audio', { controls: 'controls' });
           audioElement.ele('source', { src: fileSavePath, type: 'audio/mpeg' });
-          // Optionally add fallback text for browsers that do not support the audio element
           audioElement.txt('Your browser does not support the audio element.');
         }
       }
@@ -74,7 +71,7 @@ function jsonToQtiXml(question) {
         shuffle: 'false',
         maxChoices: '1'
       });
-      interactionElement.ele('prompt', {}, question.question);
+      interactionElement.ele('prompt').raw(question.question);  // 使用 .raw() 插入選項文本
 
       let correctOptionIndex = null;
       let optionIndex = 1;
@@ -82,20 +79,19 @@ function jsonToQtiXml(question) {
       for (let i = 1; i <= question.totalOptions; i++) {
         const optionKey = `opt${i}`;
         const optionValue = question[optionKey];
-        const optionAssetKey = `${optionKey}_asset`; // e.g., opt1_asset, opt2_asset
-        const optionAsset = question[optionAssetKey]; // 加個key
+        const optionAssetKey = `${optionKey}_asset`;
+        const optionAsset = question[optionAssetKey];
 
         if (optionValue) {
-          const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` }, optionValue);
+          const simpleChoiceElement = interactionElement.ele('simpleChoice', { identifier: `OPTION_${optionIndex}` });
+          simpleChoiceElement.raw(optionValue);  // 使用 .raw() 插入文本
 
-          // 看multiple opt的assets裏面是否有媒體文件，如果有就加進去
+          // 添加媒體文件到選項中          
           if (optionAsset && optionAsset.files && optionAsset.files.length > 0) {
             for (const file of optionAsset.files) {
               if (file.url) {
-                const fileExtension = file.url.split('.').pop().toLowerCase(); //媒體文件的名字
+                const fileExtension = file.url.split('.').pop().toLowerCase();
                 const imageExtensions = ['jpg', 'jpeg', 'gif', 'png'];
-
-                console.log(`Processing file: ${file.url} with extension: ${fileExtension}`);
 
                 if (imageExtensions.includes(fileExtension) && file.url) {
                   simpleChoiceElement.ele('img', {
@@ -104,7 +100,7 @@ function jsonToQtiXml(question) {
                     width: `${file.width}`,
                     height: `${file.height}`
                   });
-                } else if (fileExtension.endsWith('mp3')) {
+                } else if (fileExtension === 'mp3') {
                   simpleChoiceElement.ele('source', {
                     src: `https://oka.blob.core.windows.net/media/${file.url}`,
                     width: `${file.width}`,
@@ -114,6 +110,7 @@ function jsonToQtiXml(question) {
               }
             }
           }
+
           if (i.toString() === question.answer) {
             correctOptionIndex = `OPTION_${optionIndex}`;
           }
@@ -140,22 +137,23 @@ function jsonToQtiXml(question) {
         shuffle: 'false',
         maxChoices: '1'
       });
-      trueFalseInteraction.ele('prompt', {}, question.question);
+      trueFalseInteraction.ele('prompt').raw(question.question);  // 使用 .raw() 插入選項文本
+
       const trueFalseResponseDeclaration = xmlRoot.ele('responseDeclaration', {
         identifier: `RESPONSE_${question.douid}`,
         cardinality: 'single',
-        baseType: 'boolean',
+        baseType: 'boolean'
       });
       const trueFalseResponse = trueFalseResponseDeclaration.ele('correctResponse');
       trueFalseResponse.ele('value', {}, question.answer.toString());
 
       let reg = /[\u4E00-\u9FFF]|[\u3400-\u4DBF]|[\uF900-\uFAFF]|\u3000|[\uFE30-\uFE4F]|[\u3000-\u303F]|\u3000|\u3003|\u3008-\u3011|\u3014|\u3015|\u301C-\u301E|[\uFF01-\uFF5E]/;
       if (question.question.match(reg)) {
-        trueFalseInteraction.ele('simpleChoice', { identifier: '1' }, '正確');
-        trueFalseInteraction.ele('simpleChoice', { identifier: '0' }, '錯誤');
+        trueFalseInteraction.ele('simpleChoice', { identifier: '1' }).raw('正確');  // 使用 .raw() 插入
+        trueFalseInteraction.ele('simpleChoice', { identifier: '0' }).raw('錯誤');  // 使用 .raw() 插入
       } else {
-        trueFalseInteraction.ele('simpleChoice', { identifier: '1' }, 'True');
-        trueFalseInteraction.ele('simpleChoice', { identifier: '0' }, 'False');
+        trueFalseInteraction.ele('simpleChoice', { identifier: '1' }).raw('True');  // 使用 .raw() 插入
+        trueFalseInteraction.ele('simpleChoice', { identifier: '0' }).raw('False');  // 使用 .raw() 插入
       }
       break;
 
@@ -164,7 +162,7 @@ function jsonToQtiXml(question) {
       itemBody.ele('extendedTextInteraction', {
         responseIdentifier: `RESPONSE_${question.douid}`,
         expectedLength: "200"
-      }).ele('prompt', {}, question.question);
+      }).ele('prompt').raw(question.question);  // 使用 .raw() 插入問題文本
 
       const shortAnswerResponseDeclaration = xmlRoot.ele('responseDeclaration', {
         identifier: `RESPONSE_${question.douid}`,
@@ -172,7 +170,7 @@ function jsonToQtiXml(question) {
         baseType: 'string'
       });
       const shortAnswerCorrectResponse = shortAnswerResponseDeclaration.ele('correctResponse');
-      shortAnswerCorrectResponse.ele('value', {}, question.answer.toString());
+      shortAnswerCorrectResponse.ele('value').raw(question.answer.toString()); // 使用 .raw() 插入答案文本
       break;
 
     case 'QBFillingBlank':
@@ -181,8 +179,8 @@ function jsonToQtiXml(question) {
         expectedLength: "200"
       });
 
-      let correctQ = question.question.replace(/\[.*?\]/g, "____");
-      fillingBlank.ele('prompt', {}, correctQ);
+      const correctQ = question.question.replace(/\[.*?\]/g, "____");
+      fillingBlank.ele('prompt').raw(correctQ);  // 使用 .raw() 插入問題文本
 
       const fillingBlankResponseDeclaration = xmlRoot.ele('responseDeclaration', {
         identifier: `RESPONSE_${question.douid}`,
@@ -191,14 +189,14 @@ function jsonToQtiXml(question) {
       });
       const fillingBlankCorrectResponse = fillingBlankResponseDeclaration.ele('correctResponse');
       const correctAnswer = question.question.match(/\[(.*?)\]/)[1];
-      fillingBlankCorrectResponse.ele('value', {}, correctAnswer);
+      fillingBlankCorrectResponse.ele('value').raw(correctAnswer);  // 使用 .raw() 插入答案文本
       break;
 
     case 'QBInfoBlock':
       itemBody.ele('extendedTextInteraction', {
         responseIdentifier: `RESPONSE_${question.douid}`,
         expectedLength: "200"
-      }).ele('prompt', {}, question.question);
+      }).ele('prompt').raw(question.question);  // 使用 .raw() 插入問題文本
 
       const shortAnswponseDeclaration = xmlRoot.ele('responseDeclaration', {
         identifier: `RESPONSE_${question.douid}`,
